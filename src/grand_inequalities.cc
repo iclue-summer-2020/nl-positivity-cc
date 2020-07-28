@@ -226,70 +226,86 @@ bool grand(const std::vector<Sets>& gi, const nlnum::Partition& lam,
 }
 
 std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k) {
+  const auto get_ks =
+      [](const Int k) -> std::vector<std::tuple<Int, Int, Int>> {
+    std::vector<std::tuple<Int, Int, Int>> ks;
+    for (Int km = 0; km <= k; ++km) {
+      for (Int kn = 0; kn <= km; ++kn) {
+        const auto diff = km > kn ? km - kn : kn - km;
+        const auto hi = std::min(kn, kn + km);
+        for (Int kl = diff; kl <= hi; ++kl) {
+          if ((km + kn + kl) % 2 == 1) continue;
+          ks.push_back({km, kn, kl});
+        }
+      }
+    }
+    return ks;
+  };
+
   const std::vector<Sets>& gi =
       grand_ineqs(n, [](int64_t c) -> bool { return c == 1; });
-
   std::vector<std::vector<nlnum::Partition>> ans;
-  for (Int km = 0; km <= k; ++km) {
-    for (Int kn = 0; kn <= km; ++kn) {
-      const auto diff = km > kn ? km - kn : kn - km;
-      const auto hi = std::min(kn, kn + km);
-      for (Int kl = diff; kl <= hi; ++kl) {
-        if ((km + kn + kl) % 2 == 1) continue;
+  const auto ks = get_ks(k);
 
-        const nlnum::PartitionsIn pim =
-            nlnum::PartitionsIn(nlnum::Partition(n, km), km);
-        const nlnum::PartitionsIn pin =
-            nlnum::PartitionsIn(nlnum::Partition(n, kn), kn);
-        const nlnum::PartitionsIn pil =
-            nlnum::PartitionsIn(nlnum::Partition(n, kl), kl);
+#pragma omp parallel for schedule(dynamic)
+  for (Int idx = 0; idx < ks.size(); ++idx) {
+    const auto km = std::get<0>(ks[idx]);
+    const auto kn = std::get<1>(ks[idx]);
+    const auto kl = std::get<2>(ks[idx]);
 
-        const auto get =
-            [](const nlnum::PartitionsIn pi) -> std::vector<nlnum::Partition> {
-          std::vector<nlnum::Partition> acc;
-          for (const auto& e : pi) {
-            acc.push_back(e);
-          }
-          return acc;
-        };
+    const nlnum::PartitionsIn pim =
+        nlnum::PartitionsIn(nlnum::Partition(n, km), km);
+    const nlnum::PartitionsIn pin =
+        nlnum::PartitionsIn(nlnum::Partition(n, kn), kn);
+    const nlnum::PartitionsIn pil =
+        nlnum::PartitionsIn(nlnum::Partition(n, kl), kl);
 
-        const auto vim = get(pim);
-        const auto vin = get(pin);
-        const auto vil = get(pil);
+    const auto get =
+        [](const nlnum::PartitionsIn pi) -> std::vector<nlnum::Partition> {
+      std::vector<nlnum::Partition> acc;
+      for (const auto& e : pi) {
+        acc.push_back(e);
+      }
+      return acc;
+    };
 
-        const auto pp = iter::product(vim, vin, vil);
+    const auto vim = get(pim);
+    const auto vin = get(pin);
+    const auto vil = get(pil);
 
-        for (const auto& P : pp) {
-          const auto& mu = std::get<0>(P);
-          const auto& nu = std::get<1>(P);
-          const auto& lam = std::get<2>(P);
+    const auto pp = iter::product(vim, vin, vil);
 
-          // If mu < nu or nu < lam, skip these.
-          if (std::lexicographical_compare(mu.begin(), mu.end(), nu.begin(),
-                                           nu.end()))
-            continue;
-          if (std::lexicographical_compare(nu.begin(), nu.end(), lam.begin(),
-                                           lam.end()))
-            continue;
+    for (const auto& P : pp) {
+      const auto& mu = std::get<0>(P);
+      const auto& nu = std::get<1>(P);
+      const auto& lam = std::get<2>(P);
 
-          const auto pos = static_cast<bool>(nlnum::nlcoef(mu, nu, lam, true));
-          bool satisfies = true;
-          for (const auto& sx :
-               iter::permutations(std::vector<nlnum::Partition>{mu, nu, lam})) {
-            const nlnum::Partition& muu = sx[0];
-            const nlnum::Partition& nuu = sx[1];
-            const nlnum::Partition& lamm = sx[2];
-            const bool sat = grand(gi, muu, nuu, lamm);
-            satisfies &= sat;
-            if (pos && !sat) {
-              ans.push_back({muu, nuu, lamm});
-              break;
-            }
-          }
-          if (!pos && satisfies) {
-            ans.push_back({mu, nu, lam});
-          }
+      // If mu < nu or nu < lam, skip these.
+      if (std::lexicographical_compare(mu.begin(), mu.end(), nu.begin(),
+                                       nu.end()))
+        continue;
+      if (std::lexicographical_compare(nu.begin(), nu.end(), lam.begin(),
+                                       lam.end()))
+        continue;
+
+      const auto pos = static_cast<bool>(nlnum::nlcoef(mu, nu, lam, true));
+      bool satisfies = true;
+      for (const auto& sx :
+           iter::permutations(std::vector<nlnum::Partition>{mu, nu, lam})) {
+        const nlnum::Partition& muu = sx[0];
+        const nlnum::Partition& nuu = sx[1];
+        const nlnum::Partition& lamm = sx[2];
+        const bool sat = grand(gi, muu, nuu, lamm);
+        satisfies &= sat;
+        if (pos && !sat) {
+#pragma omp critical
+          ans.push_back({muu, nuu, lamm});
+          break;
         }
+      }
+      if (!pos && satisfies) {
+#pragma omp critical
+        ans.push_back({mu, nu, lam});
       }
     }
   }
