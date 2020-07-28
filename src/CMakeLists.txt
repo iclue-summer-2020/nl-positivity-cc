@@ -16,7 +16,7 @@ add_library(nl-positivity ${SOURCE_LIST} ${HEADER_LIST})
 # We need this directory, and users of our library will need it too
 target_include_directories(nl-positivity PUBLIC "${NLPositivity_SOURCE_DIR}/include/")
 
-target_link_libraries(nl-positivity PUBLIC nlnum-lib PRIVATE ${Python3_LIBRARIES} cppitertools OpenMP::OpenMP_CXX)
+target_link_libraries(nl-positivity PUBLIC nlnum-lib PRIVATE ${Python3_LIBRARIES} cppitertools prettyprint OpenMP::OpenMP_CXX)
 
 # IDEs should put the headers in a nice place
 source_group(TREE "${PROJECT_SOURCE_DIR}/include" PREFIX "Header Files" FILES ${HEADER_LIST})

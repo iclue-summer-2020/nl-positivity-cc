@@ -1,21 +1,39 @@
 // Copyright 2020 ICLUE @ UIUC. All rights reserved.
+#include <nl_positivity/grand_inequalities.h>
+#include <nlnum/nlnum.h>
+#include <combinations.hpp>
+#include <permutations.hpp>
+#include <prettyprint.hpp>
+#include <product.hpp>
+#include <range.hpp>
 
 #include <algorithm>
 #include <climits>
 #include <deque>
 #include <numeric>
+#include <ostream>
 #include <stack>
 #include <utility>
 #include <vector>
 
-#include <nl_positivity/grand_inequalities.h>
-#include <nlnum/nlnum.h>
-#include <combinations.hpp>
-#include <permutations.hpp>
-#include <product.hpp>
-#include <range.hpp>
-
 namespace nl_positivity {
+
+std::ostream& operator<<(std::ostream& os, const Sets& s) {
+  os << "Sets{"
+     << "A=" << s.A << ", "
+     << "B=" << s.B << ", "
+     << "C=" << s.C << ", "
+     << "A'=" << s.Ap << ", "
+     << "B'=" << s.Bp << ", "
+     << "C'=" << s.Cp << ", "
+     << "A1=" << s.A1 << ", "
+     << "B1=" << s.B1 << ", "
+     << "C1" << s.C1 << ", "
+     << "A2=" << s.A2 << ", "
+     << "B2=" << s.B2 << ", "
+     << "C2=" << s.C2 << "}";
+  return os;
+}
 
 std::vector<std::vector<Int>> product(const Set& s, Int repeat) {
   std::vector<std::vector<Int>> ans;

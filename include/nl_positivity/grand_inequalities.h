@@ -4,6 +4,7 @@
 #define NL_POSITIVITY_GRAND_INEQUALITIES_H_
 
 #include <cstdint>
+#include <ostream>
 #include <set>
 #include <vector>
 
@@ -33,6 +34,8 @@ struct Sets {
   ) : A{A}, B{B}, C{C}, Ap{Ap}, Bp{Bp}, Cp{Cp},
     A1{A1}, B1{B1}, C1{C1}, A2{A2}, B2{B2}, C2{C2} { }
 };
+
+std::ostream& operator<<(std::ostream&, const Sets&);
 
 // Computes the generalized Cartesian product of a set with itself.
 std::vector<std::vector<Int>> product(const Set& s, Int repeat);
