@@ -1,5 +1,5 @@
 add_executable(run run.cc)
-target_link_libraries(run PRIVATE nl-positivity gflags::gflags)
+target_link_libraries(run PRIVATE nl-positivity gflags::gflags prettyprint)
 
 # Cross-platform compiler lints
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"

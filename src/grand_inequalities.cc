@@ -3,12 +3,15 @@
 #include <algorithm>
 #include <climits>
 #include <deque>
-#include <vector>
+#include <numeric>
 #include <stack>
+#include <utility>
+#include <vector>
 
-#include <combinations.hpp>
 #include <nl_positivity/grand_inequalities.h>
 #include <nlnum/nlnum.h>
+#include <combinations.hpp>
+#include <permutations.hpp>
 #include <product.hpp>
 #include <range.hpp>
 
@@ -89,20 +92,17 @@ std::vector<Set> combinations(const std::vector<Int> R, const size_t k) {
 bool is_good(Int n, const std::vector<Int>& R, const Set& S,
              bool (*cond)(int64_t), const Set& A, const Set& B, const Set& C,
              const Set& Ap, const Set& Bp, const Set& Cp, Sets* s) {
-  const auto AV = combinations(R, Ap.size());
-  for (const auto& a : iter::product<2>(AV)) {
+  for (const auto& a : iter::product<2>(combinations(R, Ap.size()))) {
     const Set& A1 = std::get<0>(a);
     const Set& A2 = std::get<1>(a);
     if (!cond(nlnum::lrcoef(tau(Ap), tau(A1), tau(A2)))) continue;
 
-    const auto BV = combinations(R, Bp.size());
-    for (const auto& b : iter::product<2>(BV)) {
+    for (const auto& b : iter::product<2>(combinations(R, Bp.size()))) {
       const Set& B1 = std::get<0>(b);
       const Set& B2 = std::get<1>(b);
       if (!cond(nlnum::lrcoef(tau(Bp), tau(B1), tau(B2)))) continue;
 
-      const auto CV = combinations(R, Cp.size());
-      for (const auto& c : iter::product<2>(CV)) {
+      for (const auto& c : iter::product<2>(combinations(R, Cp.size()))) {
         const Set& C1 = std::get<0>(c);
         const Set& C2 = std::get<1>(c);
         if (!cond(nlnum::lrcoef(tau(Cp), tau(C1), tau(C2)))) continue;
@@ -111,15 +111,7 @@ bool is_good(Int n, const std::vector<Int>& R, const Set& S,
         const int32_t mB = static_cast<int32_t>(std::min(Ap.size(), Cp.size()));
         const int32_t mC = static_cast<int32_t>(std::min(Ap.size(), Bp.size()));
 
-        Set Ac{};
-        Set Bc{};
-        Set Cc{};
-        Set A1c{};
-        Set B1c{};
-        Set C1c{};
-        Set A2c{};
-        Set B2c{};
-        Set C2c{};
+        Set Ac, Bc, Cc, A1c, B1c, C1c, A2c, B2c, C2c;
         std::vector<std::pair<const Set&, Set&>> SS = {
             {A, Ac},   {B, Bc},   {C, Cc},   {A1, A1c}, {B1, B1c},
             {C1, C1c}, {A2, A2c}, {B2, B2c}, {C2, C2c},
@@ -130,15 +122,7 @@ bool is_good(Int n, const std::vector<Int>& R, const Set& S,
                               std::inserter(it.second, it.second.begin()));
         }
 
-        Set Aw{};
-        Set Bw{};
-        Set Cw{};
-        Set A1w{};
-        Set B1w{};
-        Set C1w{};
-        Set A2w{};
-        Set B2w{};
-        Set C2w{};
+        Set Aw, Bw, Cw, A1w, B1w, C1w, A2w, B2w, C2w;
         std::vector<std::tuple<const Set&, const Set&, int32_t, Set&>> TT = {
             {A, Ac, mA, Aw},    {B, Bc, mB, Bw},    {C, Cc, mC, Cw},
             {A1, A1c, mC, A1w}, {B1, B1c, mA, B1w}, {C1, C1c, mB, C1w},
@@ -212,6 +196,99 @@ std::vector<Sets> grand_ineqs(const Int n, bool (*cond)(int64_t)) {
         if (is_good(n, R, S, cond, A, B, C, Ap, Bp, Cp, &s)) {
 #pragma omp critical
           ans.push_back(s);
+        }
+      }
+    }
+  }
+
+  return ans;
+}
+
+bool grand(const std::vector<Sets>& gi, const nlnum::Partition& lam,
+           const nlnum::Partition& mu, const nlnum::Partition& nu) {
+  const auto sum = [](const nlnum::Partition& pi, const Set& X) -> int64_t {
+    Int ans = 0;
+    for (Int ii : X) {
+      if (ii > pi.size()) continue;
+      ans += pi[ii - 1];
+    }
+    return static_cast<int64_t>(ans);
+  };
+
+  for (const auto& s : gi) {
+    if (0 > (sum(mu, s.A) - sum(mu, s.Ap) + sum(nu, s.B) - sum(nu, s.Bp) +
+             sum(lam, s.C) - sum(lam, s.Cp))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k) {
+  const std::vector<Sets>& gi =
+      grand_ineqs(n, [](int64_t c) -> bool { return c == 1; });
+
+  std::vector<std::vector<nlnum::Partition>> ans;
+  for (Int km = 0; km <= k; ++km) {
+    for (Int kn = 0; kn <= km; ++kn) {
+      const auto diff = km > kn ? km - kn : kn - km;
+      const auto hi = std::min(kn, kn + km);
+      for (Int kl = diff; kl <= hi; ++kl) {
+        if ((km + kn + kl) % 2 == 1) continue;
+
+        const nlnum::PartitionsIn pim =
+            nlnum::PartitionsIn(nlnum::Partition(n, km), km);
+        const nlnum::PartitionsIn pin =
+            nlnum::PartitionsIn(nlnum::Partition(n, kn), kn);
+        const nlnum::PartitionsIn pil =
+            nlnum::PartitionsIn(nlnum::Partition(n, kl), kl);
+
+        const auto get =
+            [](const nlnum::PartitionsIn pi) -> std::vector<nlnum::Partition> {
+          std::vector<nlnum::Partition> acc;
+          for (const auto& e : pi) {
+            acc.push_back(e);
+          }
+          return acc;
+        };
+
+        const auto vim = get(pim);
+        const auto vin = get(pin);
+        const auto vil = get(pil);
+
+        const auto pp = iter::product(vim, vin, vil);
+
+        for (const auto& P : pp) {
+          const auto& mu = std::get<0>(P);
+          const auto& nu = std::get<1>(P);
+          const auto& lam = std::get<2>(P);
+
+          // If mu < nu or nu < lam, skip these.
+          if (std::lexicographical_compare(mu.begin(), mu.end(), nu.begin(),
+                                           nu.end()))
+            continue;
+          if (std::lexicographical_compare(nu.begin(), nu.end(), lam.begin(),
+                                           lam.end()))
+            continue;
+
+          const auto pos = static_cast<bool>(nlnum::nlcoef(mu, nu, lam, true));
+          bool satisfies = true;
+          for (const auto& sx :
+               iter::permutations(std::vector<nlnum::Partition>{mu, nu, lam})) {
+            const nlnum::Partition& muu = sx[0];
+            const nlnum::Partition& nuu = sx[1];
+            const nlnum::Partition& lamm = sx[2];
+            const bool sat = grand(gi, muu, nuu, lamm);
+            satisfies &= sat;
+            if (pos && !sat) {
+              ans.push_back({muu, nuu, lamm});
+              break;
+            }
+          }
+          if (!pos && satisfies) {
+            ans.push_back({mu, nu, lam});
+          }
         }
       }
     }

@@ -7,6 +7,8 @@
 #include <set>
 #include <vector>
 
+#include <nlnum/nlnum.h>
+
 namespace nl_positivity {
 
 typedef uint64_t Int;
@@ -42,6 +44,12 @@ std::vector<Int> tau(const Set& X);
 
 // Returns all `nsets`-tuple of sets of [n] that are disjoint.
 std::vector<std::vector<Set>> disjoints(Int n, Int nsets);
+
+bool grand(const std::vector<Sets>& gi, const nlnum::Partition& lam,
+           const nlnum::Partition& mu, const nlnum::Partition& nu);
+
+// Flags counterexamples.
+std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k);
 
 }  // namespace nl_positivity
 

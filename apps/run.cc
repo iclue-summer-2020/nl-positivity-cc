@@ -2,6 +2,7 @@
 
 #include <gflags/gflags.h>
 #include <nl_positivity/grand_inequalities.h>
+#include <prettyprint.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -10,28 +11,19 @@
 #include <string>
 
 DEFINE_uint32(n, 0, "n");
+DEFINE_uint32(k, 0, "k");
 
 int main(int argc, char** argv) {
-  gflags::SetUsageMessage("Prints each partition of n");
+  gflags::SetUsageMessage("Finds counterexamples to the NL numbers claim");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  if (FLAGS_n <= 0) {
-    std::cerr << "Please provide a value of n" << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if (FLAGS_n >= (1u << 8u)) {
-    std::cerr << "This value of n is too large" << std::endl;
-    return EXIT_FAILURE;
-  }
-
   const auto n = FLAGS_n;
+  const auto k = FLAGS_k;
+  const auto flags = nl_positivity::flagger(n, k);
 
-  const std::vector<nl_positivity::Sets> setsA =
-      nl_positivity::grand_ineqs(n, [](int64_t c) -> bool { return c > 0; });
-  const std::vector<nl_positivity::Sets> setsB =
-      nl_positivity::grand_ineqs(n, [](int64_t c) -> bool { return c == 1; });
-
-  std::cout << setsA.size() << ", " << setsB.size() << std::endl;
+  std::cout << flags.size() << std::endl;
+  if (!flags.empty()) {
+    std::cout << flags << std::endl;
+  }
   return EXIT_SUCCESS;
 }

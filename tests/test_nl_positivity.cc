@@ -42,3 +42,8 @@ TEST_CASE("grand n=3", "") {
 // n = 4 ==> 1601
 
 // n = 5 ==> 17911 for c > 0?
+
+TEST_CASE("flagger", "") {
+  const auto flags = nl_positivity::flagger(3, 4);
+  REQUIRE(flags.size() == 0);
+}

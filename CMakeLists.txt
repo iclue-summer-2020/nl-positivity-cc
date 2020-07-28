@@ -97,6 +97,12 @@ FetchContent_Declare(
     GIT_TAG v1.0
 )
 
+FetchContent_Declare(
+        prettyprint
+        GIT_REPOSITORY https://github.com/louisdx/cxx-prettyprint.git
+        GIT_TAG master
+)
+
 # Adds catch2 library.
 FetchContent_GetProperties(catch2)
 if(NOT catch2_POPULATED)
@@ -137,6 +143,15 @@ if (NOT cppitertools_POPULATED)
     add_library(cppitertools INTERFACE)
     target_include_directories(cppitertools INTERFACE ${cppitertools_SOURCE_DIR})
 endif()
+
+# Adds cxx-prettyprint
+FetchContent_GetProperties(prettyprint)
+if (NOT prettyprint_POPULATED)
+    FetchContent_Populate(prettyprint)
+    # This is overkill since we only need a single file. Though it is a clean solution.
+    add_library(prettyprint INTERFACE)
+    target_include_directories(prettyprint INTERFACE ${prettyprint_SOURCE_DIR})
+endif ()
 
 
 # The executables are here.
