@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const Sets& s) {
      << "C'=" << s.Cp << ", "
      << "A1=" << s.A1 << ", "
      << "B1=" << s.B1 << ", "
-     << "C1" << s.C1 << ", "
+     << "C1=" << s.C1 << ", "
      << "A2=" << s.A2 << ", "
      << "B2=" << s.B2 << ", "
      << "C2=" << s.C2 << "}";
