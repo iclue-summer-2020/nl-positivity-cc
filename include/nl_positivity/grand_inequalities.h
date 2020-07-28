@@ -4,16 +4,17 @@
 #define NL_POSITIVITY_GRAND_INEQUALITIES_H_
 
 #include <cstdint>
-#include <unordered_set>
+#include <set>
 #include <vector>
 
 namespace nl_positivity {
 
 typedef uint64_t Int;
-typedef std::unordered_set<Int> Set;
+typedef std::set<Int> Set;
 
 struct Sets {
   Set A, B, C, Ap, Bp, Cp, A1, B1, C1, A2, B2, C2;
+  Sets() {}
   Sets(
       const Set& A,
       const Set& B,

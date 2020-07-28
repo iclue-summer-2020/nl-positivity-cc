@@ -9,9 +9,6 @@
 #include <catch2/catch.hpp>
 #include <nl_positivity/grand_inequalities.h>
 
-TEST_CASE("n=1", "") {
-}
-
 TEST_CASE("product", "") {
   const nl_positivity::Set s = {1, 2, 3};
   const auto ps = nl_positivity::product(s, 2);
@@ -30,7 +27,14 @@ TEST_CASE("tau", "") {
   REQUIRE(tt == expected);
 }
 
-TEST_CASE("grand", "") {
-  const auto x = nl_positivity::grand_ineqs(3);
-  REQUIRE(x.size() == 0);
+TEST_CASE("grand n=2", "") {
+  const auto x = nl_positivity::grand_ineqs(2);
+  REQUIRE(x.size() == 23);
 }
+
+TEST_CASE("grand n=3", "") {
+  const auto x = nl_positivity::grand_ineqs(3);
+  REQUIRE(x.size() == 171);
+}
+
+// n = 4 ==> 1601

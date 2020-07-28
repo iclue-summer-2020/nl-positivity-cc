@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  const auto n = static_cast<int8_t>(FLAGS_n);
+  const auto n = FLAGS_n;
 
   std::vector<nl_positivity::Sets> sets = nl_positivity::grand_ineqs(n);
   std::cout << sets.size() << std::endl;
