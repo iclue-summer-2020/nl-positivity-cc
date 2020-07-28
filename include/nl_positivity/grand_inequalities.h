@@ -35,7 +35,7 @@ struct Sets {
 // Computes the generalized Cartesian product of a set with itself.
 std::vector<std::vector<Int>> product(const Set& s, Int repeat);
 
-std::vector<Sets> grand_ineqs(Int n);
+std::vector<Sets> grand_ineqs(Int n, bool (*cond)(int64_t));
 
 // Computes the tau function defined in the NL paper.
 std::vector<Int> tau(const Set& X);

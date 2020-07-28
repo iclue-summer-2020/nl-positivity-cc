@@ -86,26 +86,26 @@ std::vector<Set> combinations(const std::vector<Int> R, const size_t k) {
   return collect(iter::combinations(R, k));
 }
 
-bool is_good(Int n, const std::vector<Int>& R, const Set& S, const Set& A,
-             const Set& B, const Set& C, const Set& Ap, const Set& Bp,
-             const Set& Cp, Sets* s) {
+bool is_good(Int n, const std::vector<Int>& R, const Set& S,
+             bool (*cond)(int64_t), const Set& A, const Set& B, const Set& C,
+             const Set& Ap, const Set& Bp, const Set& Cp, Sets* s) {
   const auto AV = combinations(R, Ap.size());
   for (const auto& a : iter::product<2>(AV)) {
     const Set& A1 = std::get<0>(a);
     const Set& A2 = std::get<1>(a);
-    if (nlnum::lrcoef(tau(Ap), tau(A1), tau(A2)) <= 0) continue;
+    if (!cond(nlnum::lrcoef(tau(Ap), tau(A1), tau(A2)))) continue;
 
     const auto BV = combinations(R, Bp.size());
     for (const auto& b : iter::product<2>(BV)) {
       const Set& B1 = std::get<0>(b);
       const Set& B2 = std::get<1>(b);
-      if (nlnum::lrcoef(tau(Bp), tau(B1), tau(B2)) <= 0) continue;
+      if (!cond(nlnum::lrcoef(tau(Bp), tau(B1), tau(B2)))) continue;
 
       const auto CV = combinations(R, Cp.size());
       for (const auto& c : iter::product<2>(CV)) {
         const Set& C1 = std::get<0>(c);
         const Set& C2 = std::get<1>(c);
-        if (nlnum::lrcoef(tau(Cp), tau(C1), tau(C2)) <= 0) continue;
+        if (!cond(nlnum::lrcoef(tau(Cp), tau(C1), tau(C2)))) continue;
 
         const int32_t mA = static_cast<int32_t>(std::min(Bp.size(), Cp.size()));
         const int32_t mB = static_cast<int32_t>(std::min(Ap.size(), Cp.size()));
@@ -157,9 +157,9 @@ bool is_good(Int n, const std::vector<Int>& R, const Set& S, const Set& A,
                          std::inserter(Xw, Xw.begin()));
         }
 
-        if (nlnum::lrcoef(tau(Cw), tau(A1w), tau(B2w)) <= 0 ||
-            nlnum::lrcoef(tau(Bw), tau(C1w), tau(A2w)) <= 0 ||
-            nlnum::lrcoef(tau(Aw), tau(B1w), tau(C2w)) <= 0)
+        if (!cond(nlnum::lrcoef(tau(Cw), tau(A1w), tau(B2w))) ||
+            !cond(nlnum::lrcoef(tau(Bw), tau(C1w), tau(A2w))) ||
+            !cond(nlnum::lrcoef(tau(Aw), tau(B1w), tau(C2w))))
           continue;
 
         if (s != nullptr) {
@@ -183,7 +183,7 @@ bool is_good(Int n, const std::vector<Int>& R, const Set& S, const Set& A,
   return false;
 }
 
-std::vector<Sets> grand_ineqs(const Int n) {
+std::vector<Sets> grand_ineqs(const Int n, bool (*cond)(int64_t)) {
   const auto djs = disjoints(n, 2);
   const auto RR = iter::range(1, static_cast<int32_t>(n)+1);
   const std::vector<int32_t> Rv{RR.begin(), RR.end()};
@@ -209,7 +209,7 @@ std::vector<Sets> grand_ineqs(const Int n) {
           continue;
 
         Sets s;
-        if (is_good(n, R, S, A, B, C, Ap, Bp, Cp, &s)) {
+        if (is_good(n, R, S, cond, A, B, C, Ap, Bp, Cp, &s)) {
 #pragma omp critical
           ans.push_back(s);
         }

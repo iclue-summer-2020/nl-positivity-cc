@@ -27,7 +27,11 @@ int main(int argc, char** argv) {
 
   const auto n = FLAGS_n;
 
-  std::vector<nl_positivity::Sets> sets = nl_positivity::grand_ineqs(n);
-  std::cout << sets.size() << std::endl;
+  const std::vector<nl_positivity::Sets> setsA =
+      nl_positivity::grand_ineqs(n, [](int64_t c) -> bool { return c > 0; });
+  const std::vector<nl_positivity::Sets> setsB =
+      nl_positivity::grand_ineqs(n, [](int64_t c) -> bool { return c == 1; });
+
+  std::cout << setsA.size() << ", " << setsB.size() << std::endl;
   return EXIT_SUCCESS;
 }

@@ -28,13 +28,17 @@ TEST_CASE("tau", "") {
 }
 
 TEST_CASE("grand n=2", "") {
-  const auto x = nl_positivity::grand_ineqs(2);
+  const auto x =
+      nl_positivity::grand_ineqs(2, [](int64_t c) -> bool { return c > 0; });
   REQUIRE(x.size() == 23);
 }
 
 TEST_CASE("grand n=3", "") {
-  const auto x = nl_positivity::grand_ineqs(3);
+  const auto x =
+      nl_positivity::grand_ineqs(3, [](int64_t c) -> bool { return c == 1; });
   REQUIRE(x.size() == 171);
 }
 
 // n = 4 ==> 1601
+
+// n = 5 ==> 17911 for c > 0?
