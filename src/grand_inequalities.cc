@@ -205,9 +205,9 @@ std::vector<Sets> grand_ineqs(const Int n, bool (*cond)(int64_t)) {
         const Set& C = Cq[0];
         const Set& Cp = Cq[1];
 
-        if (A.size() < std::max(Bp.size(), Cp.size()) ||
-            B.size() < std::max(Ap.size(), Cp.size()) ||
-            C.size() < std::max(Ap.size(), Bp.size()))
+        if (A.size() != Bp.size() + Cp.size() ||
+            B.size() != Ap.size() + Cp.size() ||
+            C.size() != Ap.size() + Bp.size())
           continue;
 
         Sets s;
