@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   const auto n = FLAGS_n;
   const auto k = FLAGS_k;
 
-  const auto setss = grand_ineqs(n, [](int64_t c) -> bool { return c > 0; });
+  const auto setss = grand_ineqs(n, [](int64_t c) -> bool { return c == 1; });
   std::cout << "Number of sets: " << setss.size() << std::endl;
   std::cout << "Sets:" << std::endl;
 
