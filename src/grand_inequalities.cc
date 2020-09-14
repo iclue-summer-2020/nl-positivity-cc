@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <climits>
 #include <deque>
+#include <iostream>
 #include <numeric>
 #include <ostream>
 #include <stack>
@@ -125,43 +126,9 @@ bool is_good(Int n, const std::vector<Int>& R, const Set& S,
         const Set& C2 = std::get<1>(c);
         if (!cond(nlnum::lrcoef(tau(Cp), tau(C1), tau(C2)))) continue;
 
-        const int32_t mA = static_cast<int32_t>(std::min(Bp.size(), Cp.size()));
-        const int32_t mB = static_cast<int32_t>(std::min(Ap.size(), Cp.size()));
-        const int32_t mC = static_cast<int32_t>(std::min(Ap.size(), Bp.size()));
-
-        Set Ac, Bc, Cc, A1c, B1c, C1c, A2c, B2c, C2c;
-        std::vector<std::pair<const Set&, Set&>> SS = {
-            {A, Ac},   {B, Bc},   {C, Cc},   {A1, A1c}, {B1, B1c},
-            {C1, C1c}, {A2, A2c}, {B2, B2c}, {C2, C2c},
-        };
-        for (auto& it : SS) {
-          std::set_difference(S.begin(), S.end(), it.first.begin(),
-                              it.first.end(),
-                              std::inserter(it.second, it.second.begin()));
-        }
-
-        Set Aw, Bw, Cw, A1w, B1w, C1w, A2w, B2w, C2w;
-        std::vector<std::tuple<const Set&, const Set&, int32_t, Set&>> TT = {
-            {A, Ac, mA, Aw},    {B, Bc, mB, Bw},    {C, Cc, mC, Cw},
-            {A1, A1c, mC, A1w}, {B1, B1c, mA, B1w}, {C1, C1c, mB, C1w},
-            {A2, A2c, mB, A2w}, {B2, B2c, mC, B2w}, {C2, C2c, mA, C2w},
-        };
-        for (auto& it : TT) {
-          const Set& X = std::get<0>(it);
-          const Set& Xc = std::get<1>(it);
-          const int32_t m = std::get<2>(it);
-          Set& Xw = std::get<3>(it);
-          const auto nn = static_cast<int32_t>(n);
-          const auto Rq =
-              iter::range(nn + 1, nn + static_cast<int32_t>(X.size()) - m + 1);
-          const Set Rs{Rq.begin(), Rq.end()};
-          std::set_union(Xc.begin(), Xc.end(), Rs.begin(), Rs.end(),
-                         std::inserter(Xw, Xw.begin()));
-        }
-
-        if (!cond(nlnum::lrcoef(tau(Cw), tau(A1w), tau(B2w))) ||
-            !cond(nlnum::lrcoef(tau(Bw), tau(C1w), tau(A2w))) ||
-            !cond(nlnum::lrcoef(tau(Aw), tau(B1w), tau(C2w))))
+        if (!cond(nlnum::lrcoef(tau(C), tau(A1), tau(B2))) ||
+            !cond(nlnum::lrcoef(tau(B), tau(C1), tau(A2))) ||
+            !cond(nlnum::lrcoef(tau(A), tau(B1), tau(C2))))
           continue;
 
         if (s != nullptr) {
@@ -205,9 +172,9 @@ std::vector<Sets> grand_ineqs(const Int n, bool (*cond)(int64_t)) {
         const Set& C = Cq[0];
         const Set& Cp = Cq[1];
 
-        if (A.size() != Bp.size() + Cp.size() ||
-            B.size() != Ap.size() + Cp.size() ||
-            C.size() != Ap.size() + Bp.size())
+        if (A.size() != Bp.size() + Cp.size()
+         || B.size() != Ap.size() + Cp.size()
+         || C.size() != Ap.size() + Bp.size())
           continue;
 
         Sets s;
@@ -243,7 +210,8 @@ bool grand(const std::vector<Sets>& gi, const nlnum::Partition& lam,
   return true;
 }
 
-std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k) {
+std::vector<std::vector<nlnum::Partition>> flagger(
+    const Int n, const Int k, const std::vector<Sets>& gi) {
   const auto get_ks =
       [](const Int k) -> std::vector<std::tuple<Int, Int, Int>> {
     std::vector<std::tuple<Int, Int, Int>> ks;
@@ -260,8 +228,6 @@ std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k) {
     return ks;
   };
 
-  const std::vector<Sets>& gi =
-      grand_ineqs(n, [](int64_t c) -> bool { return c == 1; });
   std::vector<std::vector<nlnum::Partition>> ans;
   const auto ks = get_ks(k);
 
@@ -313,7 +279,9 @@ std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k) {
         const nlnum::Partition& muu = sx[0];
         const nlnum::Partition& nuu = sx[1];
         const nlnum::Partition& lamm = sx[2];
-        const bool sat = grand(gi, muu, nuu, lamm);
+        bool sat = false;
+#pragma omp critical
+        sat = grand(gi, lamm, muu, nuu);
         satisfies &= sat;
         if (pos && !sat) {
 #pragma omp critical

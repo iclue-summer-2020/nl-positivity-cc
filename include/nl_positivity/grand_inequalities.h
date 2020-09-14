@@ -52,7 +52,8 @@ bool grand(const std::vector<Sets>& gi, const nlnum::Partition& lam,
            const nlnum::Partition& mu, const nlnum::Partition& nu);
 
 // Flags counterexamples.
-std::vector<std::vector<nlnum::Partition>> flagger(const Int n, const Int k);
+std::vector<std::vector<nlnum::Partition>> flagger(
+    const Int n, const Int k, const std::vector<Sets>& gi);
 
 }  // namespace nl_positivity
 
