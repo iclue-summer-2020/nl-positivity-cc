@@ -11,7 +11,7 @@ RUN apt-get -y update    \
       python3-dev        \
       python3-pip        \
       time               \
- && python3 -m pip install --upgrade pip \
+ && python3 -m pip install --upgrade pip==20.3.4 \
  && python3 -m pip install   \
       cmake==3.17.3
 
